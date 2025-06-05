@@ -1,0 +1,81 @@
+# Environment variables
+.env
+instagrampuanapp-firebase-adminsdk-fbsvc-a314da4aa1.json
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+backend_venv/
+ENV/
+env/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+
+# Mobile specific
+ios/Flutter/App.framework
+ios/Flutter/engine
+ios/Flutter/flutter_assets
+
+android/.gradle
+android/gradle
+android/local.properties
+
+# Web specific (if applicable)
+.dart_tool/build/
+
+# Logs
+*.log
+logs/
+test_output.log
+test_output2.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Screenshots
+instagram_screenshots/
+
+# Session files
+*.json
+!package.json
+!pubspec.yaml
+
+# Test files
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Temporary files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,458 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../services/instagram_service.dart';
+
+/// Helper function to show Inst                    _errorMessage = 'Doğrulama ha          _errorMessage = 'Kod tekrar gönderilemedi: ${e.toString()}';ası: ${e.toString()}'; _errorMessage = 'Geçersiz kod. Kalan deneme: $_attemptsRemaining';gram challenge dialog
+Future<bool?> showInstagramChallengeDialog({
+  required BuildContext context,
+  required String challengeId,
+  required String challengeType,
+  required String message,
+  required Map<String, dynamic> challengeData,
+  String? userToken,
+}) {
+  return showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => InstagramChallengeDialog(
+      challengeId: challengeId,
+      challengeType: challengeType,
+      message: message,
+      challengeData: challengeData,
+      userToken: userToken,
+    ),
+  );
+}
+
+class InstagramChallengeDialog extends ConsumerStatefulWidget {
+  final String challengeId;
+  final String challengeType;
+  final String message;
+  final Map<String, dynamic> challengeData;
+  final String? userToken;
+  
+  // For login flow
+  final String? username;
+  final String? password;
+  final Map<String, dynamic>? challengeInfo;
+
+  const InstagramChallengeDialog({
+    super.key,
+    required this.challengeId,
+    required this.challengeType,
+    required this.message,
+    required this.challengeData,
+    this.userToken,
+    this.username,
+    this.password,
+    this.challengeInfo,
+  });
+  
+  // Constructor for login flow
+  const InstagramChallengeDialog.forLogin({
+    super.key,
+    required this.username,
+    required this.password,
+    required this.challengeInfo,
+  }) : challengeId = '',
+       challengeType = 'login_challenge',
+       message = '',
+       challengeData = const {},
+       userToken = null;
+
+  @override
+  ConsumerState<InstagramChallengeDialog> createState() =>
+      _InstagramChallengeDialogState();
+}
+
+class _InstagramChallengeDialogState
+    extends ConsumerState<InstagramChallengeDialog>
+    with TickerProviderStateMixin {
+  final TextEditingController _codeController = TextEditingController();
+  bool _isSubmitting = false;
+  bool _isResending = false;
+  String? _errorMessage;
+  int _attemptsRemaining = 3;
+  int _timeRemaining = 300; // 5 minutes
+  late AnimationController _timerController;
+  late AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _timerController = AnimationController(
+      duration: const Duration(seconds: 300),
+      vsync: this,
+    );
+    _pulseController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    );
+    _startTimer();
+    _pulseController.repeat();
+  }
+
+  void _startTimer() {
+    _timerController.addListener(() {
+      setState(() {
+        _timeRemaining = (300 * (1 - _timerController.value)).round();
+      });
+      if (_timeRemaining <= 0) {
+        _timerController.stop();
+        Navigator.of(context).pop(false);
+      }
+    });
+    _timerController.forward();
+  }
+
+  String get _formatTime {
+    final minutes = _timeRemaining ~/ 60;
+    final seconds = _timeRemaining % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  String get _challengeTypeDisplayName {
+    switch (widget.challengeType.toLowerCase()) {
+      case 'sms':
+        return 'SMS';
+      case 'email':
+        return 'E-posta';
+      case 'phone':
+        return 'Telefon';
+      case 'totp':
+      case '2fa':
+        return '2FA';
+      default:
+        return 'Doğrulama';
+    }
+  }
+
+  IconData get _challengeIcon {
+    switch (widget.challengeType.toLowerCase()) {
+      case 'sms':
+      case 'phone':
+        return Icons.sms;
+      case 'email':
+        return Icons.email;
+      case 'totp':
+      case '2fa':
+        return Icons.security;
+      default:
+        return Icons.verified_user;
+    }
+  }
+
+  Future<void> _submitCode() async {
+    if (_codeController.text.length != 6) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Lütfen 6 haneli kodu girin';
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isSubmitting = true;
+        _errorMessage = null;
+      });
+    }
+
+    try {
+      final instagramService = ref.read(instagramServiceProvider);
+      final success = await instagramService.resolveChallenge(
+        widget.userToken ?? '',
+        widget.challengeId,
+        _codeController.text,
+      );
+
+      if (success) {
+        Navigator.of(context).pop(true);
+      } else {
+        if (mounted) {
+          setState(() {
+            _attemptsRemaining--;
+            _errorMessage = 'Geçersiz kod. Kalan deneme: [4m_attemptsRemaining';
+          });
+        }
+        if (_attemptsRemaining <= 0) {
+          Navigator.of(context).pop(false);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Doğrulama hatası: [4me.toString()}';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _resendCode() async {
+    if (mounted) {
+      setState(() {
+        _isResending = true;
+        _errorMessage = null;
+      });
+    }
+
+    try {
+      final instagramService = ref.read(instagramServiceProvider);
+      await instagramService.resendChallenge(widget.userToken ?? '', widget.challengeId);
+      if (mounted) {
+        setState(() {
+          _timeRemaining = 300;
+        });
+      }
+      _timerController.reset();
+      _timerController.forward();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Yeni kod gönderildi'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Kod tekrar gönderilemedi: [4me.toString()}';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isResending = false;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _timerController.dispose();
+    _pulseController.dispose();
+    _codeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header with icon and timer
+            Row(
+              children: [
+                AnimatedBuilder(
+                  animation: _pulseController,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: 1.0 + (_pulseController.value * 0.1),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          _challengeIcon,
+                          color: Colors.blue,
+                          size: 24,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$_challengeTypeDisplayName Doğrulaması',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Kalan süre: $_formatTime',
+                        style: TextStyle(
+                          color: _timeRemaining < 60 ? Colors.red : Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Progress indicator
+            LinearProgressIndicator(
+              value: _timeRemaining / 300,
+              backgroundColor: Colors.grey[300],
+              valueColor: AlwaysStoppedAnimation<Color>(
+                _timeRemaining < 60 ? Colors.red : Colors.blue,
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Message
+            Text(
+              widget.message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14),
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Code input
+            TextField(
+              controller: _codeController,
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 8,
+              ),
+              decoration: InputDecoration(
+                hintText: '000000',
+                counterText: '',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.blue, width: 2),
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _errorMessage = null;
+                });
+                
+                // Auto-submit when 6 digits entered
+                if (value.length == 6) {
+                  _submitCode();
+                }
+              },
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Error message
+            if (_errorMessage != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error, color: Colors.red, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            
+            const SizedBox(height: 20),
+            
+            // Attempts remaining
+            if (_attemptsRemaining < 3)
+              Text(
+                'Kalan deneme hakkı: $_attemptsRemaining',
+                style: TextStyle(
+                  color: _attemptsRemaining == 1 ? Colors.red : Colors.orange,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            
+            const SizedBox(height: 20),
+            
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: _isResending
+                        ? null
+                        : _resendCode,
+                    child: _isResending
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Kodu Tekrar Gönder'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isSubmitting || _codeController.text.length != 6
+                        ? null
+                        : _submitCode,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text('Doğrula'),
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 12),
+            
+            // Cancel button
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text(
+                'İptal',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
