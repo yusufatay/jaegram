@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Tüm API çağrıları için temel client.
 /// Hata yönetimi ve ortak base url burada tanımlanır.
 class ApiClient {
-  static const String baseUrl = 'http://localhost:8000'; // FastAPI default port
+  static const String baseUrl = 'https://jaegram-production.up.railway.app'; // Railway backend URL
   final http.Client _client;
 
   ApiClient({http.Client? client}) : _client = client ?? http.Client();

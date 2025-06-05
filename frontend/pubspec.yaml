@@ -1,5 +1,5 @@
-name: instagram_puan_app
-description: Instagram etkileşim uygulaması (Gramelle/Topfollow benzeri)
+name: jaegram
+description: JAEGram - Instagram etkileşim uygulaması (Gramelle/Topfollow benzeri)
 version: 0.1.0+1
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -52,6 +52,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/jaegram_logo.png
     - assets/instagram_default_avatar.png
   generate: true # Bu satır flutter_localizations için l10n.yaml dosyasıyla birlikte kullanılır.
 

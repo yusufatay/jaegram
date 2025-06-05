@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 /// Diamond (puan) ile ilgili API işlemleri
 class DiamondService {
   final ApiClient _apiClient;
-  static const String baseUrl = 'http://localhost:8000';
+  static const String baseUrl = 'https://jaegram-production.up.railway.app';
   
   DiamondService(this._apiClient);
 

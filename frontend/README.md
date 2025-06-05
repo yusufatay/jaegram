@@ -1,4 +1,6 @@
-# instagram_puan_app
+# JAEGram
+
+JAEGram, Instagram etkileşim ve ödül platformu.
 
 A new Flutter project.
 

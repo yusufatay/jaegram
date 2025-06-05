@@ -32,7 +32,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> with Single
       return;
     }
     try {
-      _logChannel = WebSocketChannel.connect(Uri.parse('ws://localhost:8000/ws/admin/logs?token=$userToken'));
+      _logChannel = WebSocketChannel.connect(Uri.parse('wss://jaegram-production.up.railway.app/ws/admin/logs?token=$userToken'));
       _logChannel!.stream.listen(
         (event) async {
           await ref.refresh(adminDataProvider);
