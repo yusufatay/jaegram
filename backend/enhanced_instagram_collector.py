@@ -18,8 +18,9 @@ from instagrapi.exceptions import (
 
 from models import (
     User, InstagramProfile, InstagramCredential, InstagramPost, 
-    InstagramConnection, UserActivityLog, SessionLocal
+    InstagramConnection, UserActivityLog
 )
+from dependencies import SessionLocal
 
 # --- SCRAPING FALLBACK ---
 # Legacy scraper import removed; only modern scraper is used now
