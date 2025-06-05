@@ -2,7 +2,8 @@
 """
 Create a test user for testing Instagram scraping fallback functionality
 """
-from models import User, SessionLocal
+from models import User
+from dependencies import SessionLocal
 from passlib.context import CryptContext
 from datetime import datetime
 

@@ -11,7 +11,9 @@ from datetime import datetime
 # Add the backend directory to the Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from backend.models import User, InstagramCredential, InstagramProfile, SessionLocal
+from models import User
+from dependencies import SessionLocal
+from backend.models import InstagramCredential, InstagramProfile
 from passlib.context import CryptContext
 import logging
 

@@ -17,8 +17,10 @@ from sqlalchemy import func, desc, and_, or_
 from instagram_scraper import scrape_instagram_profile_modern
 from models import (
     User, Referral, Badge, UserBadge, Leaderboard, UserSocial,
-    CoinTransaction, CoinTransactionType, Task, TaskStatus, SessionLocal
+    CoinTransaction, CoinTransactionType, Task, TaskStatus, InstagramProfile, InstagramCredential, InstagramPost, 
+    InstagramConnection, UserActivityLog
 )
+from dependencies import SessionLocal
 from enhanced_notifications import NotificationService, NotificationType, NotificationPriority
 
 logger = logging.getLogger(__name__)
