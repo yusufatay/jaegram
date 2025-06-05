@@ -13,7 +13,8 @@ import json
 import os
 
 # Import models and dependencies
-from models import User, Task, Order, CoinTransaction, OrderType, TaskStatus, SessionLocal
+from models import User, Task, Order, CoinTransaction, OrderType, TaskStatus
+from dependencies import SessionLocal
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext

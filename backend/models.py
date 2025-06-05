@@ -7,13 +7,9 @@ from datetime import datetime
 import os
 
 # Database yeri
-SQLALCHEMY_DATABASE_URL = "sqlite:///./instagram_platform.db"
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./instagram_platform.db")
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, 
-    connect_args={"check_same_thread": False}
-)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# engine ve SessionLocal sadece model tanımı için burada, uygulama genelinde dependencies.py kullanılacak
 
 Base = declarative_base()
 
